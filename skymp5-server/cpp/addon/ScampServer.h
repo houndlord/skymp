@@ -9,6 +9,7 @@
 #include <napi.h>
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
+#include "archives/NapiOutputArchive.h"
 
 class ScampServer : public Napi::ObjectWrap<ScampServer>
 {
@@ -18,6 +19,7 @@ public:
   static Napi::Object Init(Napi::Env env, Napi::Object exports);
   ScampServer(const Napi::CallbackInfo& info);
 
+  static Napi::Value Test(const Napi::CallbackInfo& info);
   static Napi::Value WriteLogs(const Napi::CallbackInfo& info);
 
   // private methods, not intended for use in gamemode

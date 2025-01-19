@@ -3,11 +3,13 @@
 #include "Bot.h"
 #include "FormCallbacks.h"
 #include "GamemodeApi.h"
+#include "Inventory.h"
 #include "NapiHelper.h"
 #include "NetworkingCombined.h"
 #include "PacketHistoryWrapper.h"
 #include "PapyrusUtils.h"
 #include "ScampServerListener.h"
+#include "archives/NapiOutputArchive.h"
 #include "database_drivers/DatabaseFactory.h"
 #include "formulas/DamageMultFormula.h"
 #include "formulas/SweetPieDamageFormula.h"
@@ -24,6 +26,7 @@
 #include <napi.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <sstream>
+#
 
 namespace {
 
@@ -62,6 +65,8 @@ Napi::FunctionReference ScampServer::constructor;
 
 Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
 {
+  // ScampServer
+
   Napi::Function func = DefineClass(
     env, "ScampServer",
     { InstanceMethod("_setSelf", &ScampServer::_SetSelf),
@@ -127,7 +132,33 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
   exports.Set("ScampServer", func);
 
   exports.Set("writeLogs", Napi::Function::New(env, WriteLogs));
+  exports.Set("test", Napi::Function::New(env, Test));
   return exports;
+}
+
+Napi::Value ScampServer::Test(const Napi::CallbackInfo& info)
+{
+  try {
+    // auto result = Napi::String::New(info.Env(), "hi");
+    // return result;
+    Inventory inv;
+    inv.entries.push_back(Inventory::Entry{
+      .name = "ololo"
+    });
+    // inv.ToJson();
+    //return Napi::String::New(info.Env(), inv.ToJson().dump(2));
+    //return NapiHelper::ParseJson(info.Env(), inv.ToJson());
+    std::cerr << "ARRRGH " << __LINE__ << "\n";
+    NapiOutputArchive arc(info.Env());
+    std::cerr << "ARRRGH " << __LINE__ << "\n";
+    arc.Serialize("xyj", *inv.entries[0].name);
+    std::cerr << "ARRRGH " << __LINE__ << "\n";
+    //arc.Serialize("xyj", inv.entries[0].name);
+    return arc.extract_output();
+    std::cerr << "ARRRGH " << __LINE__ << "\n";
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), (std::string)e.what());
+  }
 }
 
 Napi::Value ScampServer::WriteLogs(const Napi::CallbackInfo& info)

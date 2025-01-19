@@ -1,3 +1,4 @@
+/*
 import * as ui from "./ui";
 
 // @ts-ignore
@@ -14,7 +15,6 @@ sourceMapSupport.install({
   }
 });
 
-import * as scampNative from "./scampNative";
 import { Settings } from "./settings";
 import { System } from "./systems/system";
 import { MasterClient } from "./systems/masterClient";
@@ -123,184 +123,29 @@ const setupStreams = (scampNative: any) => {
     errorStream.write(chunk, encoding, callback);
   };
 };
+*/
+
+import * as scampNative from "./scampNative";
 
 const main = async () => {
-  const settingsObject = await Settings.get();
-  const {
-    port, master, maxPlayers, name, ip, offlineMode, gamemodePath
-  } = settingsObject;
+  console.log(scampNative.getScampNative().test());
+  // const server = createScampServer(123, 123, {});
 
-  const log = console.log;
-  const systems = new Array<System>();
-  systems.push(
-    new MasterClient(log, port, master, maxPlayers, name, ip, 5000, offlineMode),
-    new Spawn(log),
-    new Login(log, maxPlayers, master, port, ip, offlineMode),
-    new DiscordBanSystem(),
-    new MasterApiBalanceSystem(log, maxPlayers, master, port, ip, offlineMode)
-  );
+  // const toAbsolute = (p: string) => {
+  //   if (path.isAbsolute(p)) return p;
+  //   return path.resolve("", p);
+  // };
 
-  setupStreams(scampNative.getScampNative());
+  // const clear = () => server.clear();
 
-  manifestGen.generateManifest(settingsObject);
-  ui.main(settingsObject);
-
-  let server: any;
-
-  try {
-    server = createScampServer(port, maxPlayers, settingsObject.allSettings);
-    ui.setServer(server);
-  }
-  catch (e) {
-    console.error(e);
-    console.error(`Stopping the server due to the previous error`);
-    process.exit(-1);
-  }
-  const ctx = { svr: server, gm: new EventEmitter() };
-
-  console.log(`Current process ID is ${pid}`);
-
-  (async () => {
-    while (1) {
-      try {
-        server.tick();
-        await new Promise((r) => setTimeout(r, 1));
-      } catch (e) {
-        console.error(`in server.tick:\n${e.stack}`);
-      }
-    }
-  })();
-
-  for (const system of systems) {
-    if (system.initAsync) await system.initAsync(ctx);
-    log(`Initialized ${system.systemName}`);
-    if (system.updateAsync)
-      (async () => {
-        while (1) {
-          await new Promise((r) => setTimeout(r, 1));
-          try {
-            await system.updateAsync(ctx);
-          } catch (e) {
-            console.error(e);
-          }
-        }
-      })();
-  }
-
-  server.on("connect", (userId: number) => {
-    log("connect", userId);
-    for (const system of systems) {
-      try {
-        if (system.connect) system.connect(userId, ctx);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  });
-
-  server.on("disconnect", (userId: number) => {
-    log("disconnect", userId);
-    for (const system of systems) {
-      try {
-        if (system.disconnect) system.disconnect(userId, ctx);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  });
-
-  server.on("customPacket", (userId: number, rawContent: string) => {
-    const content = JSON.parse(rawContent);
-
-    const type = `${content.customPacketType}`;
-    delete content.customPacketType;
-
-    for (const system of systems) {
-      try {
-        if (system.customPacket)
-          system.customPacket(userId, type, content, ctx);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  });
-
-  server.on("customPacket", (userId: number, content: string) => {
-    // At this moment we don't have any custom packets
-  });
-
-  // It's important to call this before gamemode
-  try {
-    server.attachSaveStorage();
-  }
-  catch (e) {
-    console.error(e);
-    console.error(`Stopping the server due to the previous error`);
-    process.exit(-1);
-  }
-
-  const clear = () => server.clear();
-
-  const toAbsolute = (p: string) => {
-    if (path.isAbsolute(p)) return p;
-    return path.resolve("", p);
-  };
-
-  const absoluteGamemodePath = toAbsolute(gamemodePath);
-  log(`Gamemode path is "${absoluteGamemodePath}"`);
-
-  if (!fs.existsSync(absoluteGamemodePath)) {
-    log(
-      `Error during loading a gamemode from "${absoluteGamemodePath}" - file or directory does not exist`
-    );
-  } else {
-    try {
-      requireUncached(absoluteGamemodePath, clear, server);
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  if (fs.existsSync(absoluteGamemodePath)) {
-    try {
-      requireUncached(absoluteGamemodePath, clear, server);
-    } catch (e) {
-      console.error(e);
-    }
-
-    const watcher = chokidar.watch(absoluteGamemodePath, {
-      ignored: /^\./,
-      persistent: true,
-      awaitWriteFinish: true,
-    });
-
-    const numReloads = { n: 0 };
-
-    const reloadGamemode = () => {
-      try {
-        requireUncached(absoluteGamemodePath, clear, server);
-        numReloads.n++;
-      } catch (e) {
-        console.error(e);
-      }
-    };
-
-    const reloadGamemodeTimeout = function () {
-      const n = numReloads.n;
-      setTimeout(
-        () => (n === numReloads.n ? reloadGamemode() : undefined),
-        1000
-      );
-    };
-
-    watcher.on("add", reloadGamemodeTimeout);
-    watcher.on("addDir", reloadGamemodeTimeout);
-    watcher.on("change", reloadGamemodeTimeout);
-    watcher.on("unlink", reloadGamemodeTimeout);
-    watcher.on("error", function (error) {
-      console.error("Error happened in chokidar watch", error);
-    });
-  }
+  // const log = console.log;
+  // const absoluteGamemodePath = toAbsolute('gamemode.js');
+  // log(`Gamemode path is "${absoluteGamemodePath}"`);
+  // try {
+  //   requireUncached(absoluteGamemodePath, clear, server);
+  // } catch (e) {
+  //   console.error(e);
+  // }
 };
 
 main();
